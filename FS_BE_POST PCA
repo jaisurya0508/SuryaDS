@@ -1,0 +1,93 @@
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+import pandas as pd
+
+# Step 1: Initialize a Logistic Regression model
+model = LogisticRegression(max_iter=1000, solver='liblinear')
+
+# Step 2: Perform Forward Selection using PCA components as features
+forward_selector = SequentialFeatureSelector(
+    estimator=model,
+    n_features_to_select="auto",  # Automatically determine the optimal number of features
+    direction='forward',  # Forward selection
+    scoring='roc_auc',  # Use AUC as the evaluation metric
+    cv=5,  # 5-fold cross-validation
+    n_jobs=-1  # Utilize all available processors
+)
+
+# Step 3: Fit the selector to the PCA-transformed training data
+forward_selector.fit(x_train, y_train)
+
+# Step 4: Get selected PCA components and their scores
+selected_forward_features = x_train.columns[forward_selector.get_support()]
+print("Selected features using forward selection:")
+print(selected_forward_features)
+
+# Optional: Score each feature individually
+forward_scores = []
+for feature in selected_forward_features:
+    score = cross_val_score(model, x_train[[feature]], y_train, cv=5, scoring='roc_auc').mean()
+    forward_scores.append((feature, score))
+
+# Create a DataFrame for scores
+forward_scores_df = pd.DataFrame(forward_scores, columns=['Feature', 'AUC_Score'])
+print("Forward selection feature scores:")
+print(forward_scores_df.sort_values(by='AUC_Score', ascending=False))
+
+
+
+
+# Step 1: Perform Backward Elimination using PCA components as features
+backward_selector = SequentialFeatureSelector(
+    estimator=model,
+    n_features_to_select="auto",  # Automatically determine the optimal number of features
+    direction='backward',  # Backward elimination
+    scoring='roc_auc',  # Use AUC as the evaluation metric
+    cv=5,  # 5-fold cross-validation
+    n_jobs=-1  # Utilize all available processors
+)
+
+# Step 2: Fit the selector to the PCA-transformed training data
+backward_selector.fit(x_train, y_train)
+
+# Step 3: Get selected PCA components and their scores
+selected_backward_features = x_train.columns[backward_selector.get_support()]
+print("Selected features using backward elimination:")
+print(selected_backward_features)
+
+# Optional: Score each feature individually
+backward_scores = []
+for feature in selected_backward_features:
+    score = cross_val_score(model, x_train[[feature]], y_train, cv=5, scoring='roc_auc').mean()
+    backward_scores.append((feature, score))
+
+# Create a DataFrame for scores
+backward_scores_df = pd.DataFrame(backward_scores, columns=['Feature', 'AUC_Score'])
+print("Backward elimination feature scores:")
+print(backward_scores_df.sort_values(by='AUC_Score', ascending=False))
+
+
+
+# Get PCA loadings (components) as a DataFrame
+loadings = pd.DataFrame(
+    pca.components_.T,  # Transpose to match features with components
+    index=numerical_data_scaled.columns,  # Original feature names
+    columns=[f"PCA_{i+1}" for i in range(pca.n_components_)]
+)
+
+# Display the loadings for inspection
+print("PCA Loadings (feature contributions to components):")
+print(loadings)
+
+# Identify the top contributing features for each principal component
+for component in loadings.columns:
+    print(f"\nTop contributing features to {component}:")
+    print(loadings[component].abs().sort_values(ascending=False).head(10))
+
+# Aggregate contributions across all components
+feature_importance = loadings.abs().sum(axis=1).sort_values(ascending=False)
+
+print("\nTop features contributing across all principal components:")
+print(feature_importance.head(10))
+
