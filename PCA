@@ -41,3 +41,28 @@ y_test = Test['bad03_24m']
 print(f"Train set shape: {x_train.shape}")
 print(f"Test set shape: {x_test.shape}")
 print(f"Number of PCA components used: {x_train.shape[1]}")
+
+
+
+# Get PCA loadings (components) as a DataFrame
+loadings = pd.DataFrame(
+    pca.components_.T,  # Transpose to match features with components
+    index=numerical_data_scaled.columns,  # Original feature names
+    columns=[f"PCA_{i+1}" for i in range(pca.n_components_)]
+)
+
+# Display the loadings for inspection
+print("PCA Loadings (feature contributions to components):")
+print(loadings)
+
+# Identify the top contributing features for each principal component
+for component in loadings.columns:
+    print(f"\nTop contributing features to {component}:")
+    print(loadings[component].abs().sort_values(ascending=False).head(10))
+
+# Aggregate contributions across all components
+feature_importance = loadings.abs().sum(axis=1).sort_values(ascending=False)
+
+print("\nTop features contributing across all principal components:")
+print(feature_importance.head(10))
+
