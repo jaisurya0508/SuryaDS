@@ -66,3 +66,84 @@ feature_importance = loadings.abs().sum(axis=1).sort_values(ascending=False)
 print("\nTop features contributing across all principal components:")
 print(feature_importance.head(10))
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from sklearn.feature_selection import VarianceThreshold
+
+# Apply variance threshold
+selector = VarianceThreshold(threshold=0.01)  # Select features with variance greater than 1%
+x_train_reduced = selector.fit_transform(x_train_scaled)
+x_test_reduced = selector.transform(x_test_scaled)
+
+print(f"Reduced feature set shape: {x_train_reduced.shape}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+
+# Assuming Train and Test data is already available as x_train_scaled, x_test_scaled
+
+# Reduce features using a variance threshold
+from sklearn.feature_selection import VarianceThreshold
+selector = VarianceThreshold(threshold=0.01)
+x_train_reduced = selector.fit_transform(x_train_scaled)
+x_test_reduced = selector.transform(x_test_scaled)
+
+# Initialize the logistic regression model with a more efficient solver
+model = LogisticRegression(solver='saga', max_iter=1000)
+
+# Forward Selection with smaller number of features selected at once
+forward_selector = SequentialFeatureSelector(
+    estimator=model,
+    n_features_to_select=10,  # Select 10 features at a time
+    direction='forward',
+    scoring='roc_auc',
+    cv=3,  # Reduce the number of folds to save memory
+    n_jobs=-1  # Parallelize the computation
+)
+
+# Fit the forward selector
+forward_selector.fit(x_train_reduced, y_train)
+
+# Get the selected features
+selected_forward_features = x_train_scaled.columns[forward_selector.get_support()]
+print("\nSelected features using forward selection:")
+print(selected_forward_features)
+
+
