@@ -1,0 +1,46 @@
+import numpy as np
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+
+# Assuming 'dff' is your dataset
+
+# Step 1: Select numerical columns only
+numerical_data = dff.select_dtypes(exclude='object')
+
+# Step 2: Fill missing values with -9999
+imputer = SimpleImputer(strategy='constant', fill_value=-9999)
+numerical_data_imputed = pd.DataFrame(imputer.fit_transform(numerical_data), columns=numerical_data.columns)
+
+# Step 3: Standardize the numerical data (PCA requires standardized data)
+scaler = StandardScaler()
+numerical_data_scaled = pd.DataFrame(scaler.fit_transform(numerical_data_imputed), columns=numerical_data.columns)
+
+# Step 4: Apply PCA
+pca = PCA(n_components=0.95)  # Retaining 95% of the variance
+pca_data = pca.fit_transform(numerical_data_scaled)
+
+# Step 5: Split the data into train and test based on the UNIQUE_ID modulo condition
+dff["dataset"] = np.where(dff["UNIQUE_ID"] % 60 < 42, "TRAIN", "TEST")
+
+# Train and Test datasets
+Train = dff.loc[dff["dataset"] == "TRAIN"]
+Test = dff.loc[dff["dataset"] == "TEST"]
+
+# Step 6: Prepare the features and target variable for training
+x_train = Train.drop(columns=['bad03_24m', 'dataset', 'UNIQUE_ID'])
+y_train = Train['bad03_24m']
+x_test = Test.drop(columns=['bad03_24m', 'dataset', 'UNIQUE_ID'])
+y_test = Test['bad03_24m']
+
+# Step 7: If you want to use the PCA-transformed data instead of the original features, you can replace x_train and x_test
+# Adding PCA data as new features
+x_train_pca = pd.DataFrame(pca.transform(x_train.select_dtypes(exclude='object').fillna(-9999).apply(StandardScaler().fit_transform)), columns=[f"pca_{i+1}" for i in range(pca_data.shape[1])])
+x_test_pca = pd.DataFrame(pca.transform(x_test.select_dtypes(exclude='object').fillna(-9999).apply(StandardScaler().fit_transform)), columns=[f"pca_{i+1}" for i in range(pca_data.shape[1])])
+
+# Step 8: Print the shapes of the datasets
+print(f"Train set shape: {x_train.shape}")
+print(f"Test set shape: {x_test.shape}")
+print(f"xTest set shape: {x_test_pca.shape}")
