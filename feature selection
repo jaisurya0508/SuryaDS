@@ -1,0 +1,108 @@
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+
+# Step 1: Assuming 'dff' is your dataset
+# Step 2: Select numerical columns only for PCA
+numerical_data = dff.select_dtypes(exclude='object')
+
+# Step 3: Fill missing values with -9999
+imputer = SimpleImputer(strategy='constant', fill_value=-9999)
+numerical_data_imputed = pd.DataFrame(imputer.fit_transform(numerical_data), columns=numerical_data.columns)
+
+# Step 4: Standardize the numerical data (PCA requires standardized data)
+scaler = StandardScaler()
+numerical_data_scaled = pd.DataFrame(scaler.fit_transform(numerical_data_imputed), columns=numerical_data.columns)
+
+# Step 5: Apply PCA to retain 95% of the variance
+from sklearn.decomposition import PCA
+pca = PCA(n_components=0.95)
+pca_data = pd.DataFrame(pca.fit_transform(numerical_data_scaled), columns=[f"pca_{i+1}" for i in range(pca.n_components_)])
+
+# Step 6: Add PCA components back to the dataset
+dff_pca = dff.copy()
+for col in pca_data.columns:
+    dff_pca[col] = pca_data[col]
+
+# Step 7: Split the data into train and test based on UNIQUE_ID modulo condition
+dff_pca["dataset"] = np.where(dff_pca["UNIQUE_ID"] % 60 < 42, "TRAIN", "TEST")
+Train = dff_pca.loc[dff_pca["dataset"] == "TRAIN"]
+Test = dff_pca.loc[dff_pca["dataset"] == "TEST"]
+
+# Step 8: Prepare features and target variable for model training
+x_train = Train[[col for col in pca_data.columns]]  # Use PCA features only
+y_train = Train['bad03_24m']
+x_test = Test[[col for col in pca_data.columns]]  # Use PCA features only
+y_test = Test['bad03_24m']
+
+# Print the shapes of the datasets
+print(f"Train set shape: {x_train.shape}")
+print(f"Test set shape: {x_test.shape}")
+print(f"Number of PCA components used: {x_train.shape[1]}")
+
+
+# Step 9: Initialize the model
+model = LogisticRegression(max_iter=1000, solver='liblinear')
+
+# Step 10: Forward Selection
+forward_selector = SequentialFeatureSelector(
+    estimator=model,
+    n_features_to_select="auto",  # Automatically determine the optimal number of features
+    direction='forward',  # Forward selection
+    scoring='roc_auc',  # Use AUC as the evaluation metric
+    cv=5,  # 5-fold cross-validation
+    n_jobs=-1  # Utilize all available processors
+)
+
+# Fit the forward selector
+forward_selector.fit(x_train, y_train)
+
+# Get selected features using forward selection
+selected_forward_features = x_train.columns[forward_selector.get_support()]
+print("\nSelected features using forward selection:")
+print(selected_forward_features)
+
+# Optional: Get cross-validation scores (importance) for selected features
+forward_scores = []
+for feature in selected_forward_features:
+    score = cross_val_score(model, x_train[[feature]], y_train, cv=5, scoring='roc_auc').mean()
+    forward_scores.append((feature, score))
+
+# Create a DataFrame for forward selection scores
+forward_scores_df = pd.DataFrame(forward_scores, columns=['Feature', 'AUC_Score'])
+print("\nForward selection feature importance (AUC score):")
+print(forward_scores_df.sort_values(by='AUC_Score', ascending=False))
+
+
+# Step 11: Backward Elimination
+backward_selector = SequentialFeatureSelector(
+    estimator=model,
+    n_features_to_select="auto",  # Automatically determine the optimal number of features
+    direction='backward',  # Backward elimination
+    scoring='roc_auc',  # Use AUC as the evaluation metric
+    cv=5,  # 5-fold cross-validation
+    n_jobs=-1  # Utilize all available processors
+)
+
+# Fit the backward selector
+backward_selector.fit(x_train, y_train)
+
+# Get selected features using backward elimination
+selected_backward_features = x_train.columns[backward_selector.get_support()]
+print("\nSelected features using backward elimination:")
+print(selected_backward_features)
+
+# Optional: Get cross-validation scores (importance) for selected features
+backward_scores = []
+for feature in selected_backward_features:
+    score = cross_val_score(model, x_train[[feature]], y_train, cv=5, scoring='roc_auc').mean()
+    backward_scores.append((feature, score))
+
+# Create a DataFrame for backward elimination scores
+backward_scores_df = pd.DataFrame(backward_scores, columns=['Feature', 'AUC_Score'])
+print("\nBackward elimination feature importance (AUC score):")
+print(backward_scores_df.sort_values(by='AUC_Score', ascending=False))
