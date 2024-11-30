@@ -201,3 +201,15 @@ x_train_selected = x_train[selected_features]
 # Display selected features
 print(f"\nSelected Features: {x_train_selected.columns.tolist()}")
 
+
+
+from sklearn.preprocessing import StandardScaler
+
+# Scale the data
+scaler = StandardScaler()
+x_train_scaled = pd.DataFrame(scaler.fit_transform(x_train), columns=x_train.columns)
+
+# Perform Variance Threshold Selection on scaled data
+selected_features, variance_df = variance_threshold_selection_with_scores(x_train_scaled, threshold=0.01)
+
+
