@@ -1,25 +1,46 @@
 from sklearn.feature_selection import VarianceThreshold
 
-def variance_threshold_selection(x_train, threshold=0.01):
+def variance_threshold_selection_with_scores(x_train, threshold=0.01):
     """
-    Perform feature selection by removing features with low variance.
-
+    Perform feature selection by removing features with low variance and display feature variance scores.
+    
     Parameters:
         x_train (pd.DataFrame): Training features.
         threshold (float): Variance threshold. Features with variance below this value are removed.
-
+    
     Returns:
         selected_features (list): List of features with variance above the threshold.
     """
+    # Initialize the VarianceThreshold with the given threshold
     selector = VarianceThreshold(threshold=threshold)
-    x_train_selected = selector.fit_transform(x_train)
+    
+    # Fit the selector to the data
+    selector.fit(x_train)
+    
+    # Get the variance scores of each feature
+    feature_variances = selector.variances_
+    
+    # Create a DataFrame to display feature names and their corresponding variance scores
+    variance_df = pd.DataFrame({
+        'Feature': x_train.columns,
+        'Variance': feature_variances
+    })
+    
+    # Display the variance scores for each feature
+    print("Feature variance scores:")
+    print(variance_df.sort_values(by='Variance', ascending=False))
+    
+    # Select the features that meet the variance threshold
     selected_features = x_train.columns[selector.get_support()].tolist()
     
-    print(f"Number of features selected: {len(selected_features)}")
+    print(f"\nNumber of features selected: {len(selected_features)}")
     print(f"Selected features: {selected_features}")
     
-    return selected_features
+    return selected_features, variance_df
 
 # Example usage:
-selected_features = variance_threshold_selection(x_train, threshold=0.01)
-x_train_selected = x_train[selected_features]
+# x_train is your training dataset
+selected_features, variance_df = variance_threshold_selection_with_scores(x_train, threshold=0.01)
+
+# To see the variance score for each feature, use:
+print(variance_df.head())
