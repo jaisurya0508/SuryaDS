@@ -1,0 +1,109 @@
+import pandas as pd
+import numpy as np
+import random
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+
+# ---- Step 1: Prepare Data ----
+# Assuming your data is already loaded in 'data' as a DataFrame
+# Replace 'your_data.csv' with the path to your dataset if loading from a file
+# data = pd.read_csv('your_data.csv')
+
+# Fill missing values
+data.fillna(-9999, inplace=True)
+
+# Split dataset into train and test as per your split condition
+data["dataset"] = np.where(data["UNIQUE_ID"] % 60 < 42, "TRAIN", "TEST")
+train_data = data.loc[data["dataset"] == "TRAIN"]
+test_data = data.loc[data["dataset"] == "TEST"]
+
+# Separate features and target
+x_train = train_data.drop(columns=["Final_Bad", "dataset", "UNIQUE_ID"])
+y_train = train_data["Final_Bad"]
+x_test = test_data.drop(columns=["Final_Bad", "dataset", "UNIQUE_ID"])
+y_test = test_data["Final_Bad"]
+
+print(f"Train Data Shape: {x_train.shape}")
+print(f"Test Data Shape: {x_test.shape}")
+
+# ---- Step 2: Forward Selection ----
+def forward_selection(x_train, y_train, max_features=300, threshold_in=0.005):
+    """
+    Perform forward selection using Logistic Regression with AUC as the metric.
+
+    Parameters:
+        x_train (pd.DataFrame): Training features.
+        y_train (pd.Series): Training target.
+        max_features (int): Maximum number of features to select.
+        threshold_in (float): Minimum AUC improvement required to add a feature.
+
+    Returns:
+        selected_features (list): List of selected feature names.
+    """
+    initial_features = list(x_train.columns)
+    selected_features = []
+    best_score = 0  # Start with baseline AUC
+
+    print(f"Starting Forward Selection with {len(initial_features)} features...")
+    
+    while initial_features and len(selected_features) < max_features:
+        scores_with_candidates = []
+        
+        for feature in initial_features:
+            current_features = selected_features + [feature]
+            try:
+                model = LogisticRegression(max_iter=500, solver='liblinear', random_state=42)
+                model.fit(x_train[current_features], y_train)
+                y_pred = model.predict_proba(x_train[current_features])[:, 1]
+                auc = roc_auc_score(y_train, y_pred)
+                scores_with_candidates.append((feature, auc))
+            except Exception as e:
+                print(f"Error with feature {feature}: {e}")
+                continue
+        
+        if not scores_with_candidates:
+            print("No more features to evaluate. Stopping.")
+            break
+        
+        # Select the feature with the highest AUC improvement
+        best_new_feature, best_new_score = max(scores_with_candidates, key=lambda x: x[1])
+        
+        if best_new_score - best_score > threshold_in:
+            selected_features.append(best_new_feature)
+            initial_features.remove(best_new_feature)
+            best_score = best_new_score
+            print(f"Selected Feature: {best_new_feature} | AUC: {best_new_score:.4f}")
+        else:
+            print("No significant improvement. Stopping.")
+            break
+
+    print(f"Forward Selection completed. Selected {len(selected_features)} features.")
+    return selected_features
+
+# Run Forward Selection
+selected_features = forward_selection(x_train, y_train, max_features=300, threshold_in=0.005)
+
+# ---- Step 3: Compare IV-Based Features with Forward Selected ----
+# Assuming iv_selected_features is the list of features chosen based on IV
+iv_selected_features = set(x_train.columns)  # Replace with actual IV-based feature list if available
+forward_selected_features = set(selected_features)
+
+# Find overlap
+common_features = iv_selected_features & forward_selected_features
+print(f"Number of common features between IV and forward selection: {len(common_features)}")
+print(f"Common Features: {list(common_features)}")
+
+# ---- Step 4: Randomly Select 50 Features for Model Building ----
+final_features = random.sample(selected_features, 50)
+print("Randomly Selected 50 Features for Model Building:")
+print(final_features)
+
+# ---- Step 5: Train Logistic Regression Model on Selected Features ----
+# Train the model
+model = LogisticRegression(max_iter=500, solver='liblinear', random_state=42)
+model.fit(x_train[final_features], y_train)
+
+# Predict and Evaluate on Test Set
+y_pred = model.predict_proba(x_test[final_features])[:, 1]
+auc = roc_auc_score(y_test, y_pred)
+print(f"Model AUC on Test Data: {auc:.4f}")
