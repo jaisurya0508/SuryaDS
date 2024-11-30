@@ -1,0 +1,25 @@
+from sklearn.feature_selection import VarianceThreshold
+
+def variance_threshold_selection(x_train, threshold=0.01):
+    """
+    Perform feature selection by removing features with low variance.
+
+    Parameters:
+        x_train (pd.DataFrame): Training features.
+        threshold (float): Variance threshold. Features with variance below this value are removed.
+
+    Returns:
+        selected_features (list): List of features with variance above the threshold.
+    """
+    selector = VarianceThreshold(threshold=threshold)
+    x_train_selected = selector.fit_transform(x_train)
+    selected_features = x_train.columns[selector.get_support()].tolist()
+    
+    print(f"Number of features selected: {len(selected_features)}")
+    print(f"Selected features: {selected_features}")
+    
+    return selected_features
+
+# Example usage:
+selected_features = variance_threshold_selection(x_train, threshold=0.01)
+x_train_selected = x_train[selected_features]
