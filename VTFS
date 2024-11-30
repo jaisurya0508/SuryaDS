@@ -44,3 +44,73 @@ selected_features, variance_df = variance_threshold_selection_with_scores(x_trai
 
 # To see the variance score for each feature, use:
 print(variance_df.head())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+import pandas as pd
+
+def correlation_threshold_selection(x_train, threshold=0.9):
+    """
+    Remove features that are highly correlated with others (greater than the threshold).
+    
+    Parameters:
+        x_train (pd.DataFrame): Training features.
+        threshold (float): Correlation threshold.
+
+    Returns:
+        selected_features (list): List of features with low correlation to others.
+    """
+    # Calculate the correlation matrix
+    corr_matrix = x_train.corr()
+    
+    # Extract upper triangle of the correlation matrix (excluding diagonal)
+    upper_triangle = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+    
+    # Create a list of features to drop based on high correlation
+    to_drop = []
+    for column in upper_triangle.columns:
+        # Check if the feature has any correlation above the threshold with any other feature
+        correlated_features = upper_triangle[column].abs() > threshold
+        if any(correlated_features):
+            to_drop.append(column)
+            print(f"Feature '{column}' has correlations above {threshold} with:")
+            # Show the correlation values with other features it is highly correlated with
+            print(upper_triangle[column][correlated_features].sort_values(ascending=False))
+    
+    # Select features that are not in the drop list
+    selected_features = [column for column in x_train.columns if column not in to_drop]
+    
+    print(f"\nNumber of features selected: {len(selected_features)}")
+    print(f"Selected features: {selected_features}")
+    
+    return selected_features
+
+# Example usage:
+# Assuming x_train is your dataset with numerical features
+# You can call this function and pass your data for feature selection
+
+# Example dataframe (replace this with your actual x_train dataframe)
+# x_train = pd.DataFrame(...) # Your feature dataset here
+
+selected_features = correlation_threshold_selection(x_train, threshold=0.9)
+
+# Use the selected features to create a new dataframe with only the selected features
+x_train_selected = x_train[selected_features]
+
+# Display the selected features
+print(f"\nSelected Features after correlation threshold selection: {x_train_selected.columns}")
