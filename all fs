@@ -49,6 +49,32 @@ def recursive_feature_elimination(x_train, y_train, n_features_to_select=200):
 # selected_features, ranking_df = recursive_feature_elimination(x_train, y_train, n_features_to_select=200)
 
 
+from sklearn.linear_model import LogisticRegression
+import numpy as np
+
+def lasso_feature_selection(x_train, y_train, alpha=0.01):
+    model = LogisticRegression(penalty='l1', solver='liblinear', C=1/alpha, random_state=42)
+    model.fit(x_train, y_train)
+    
+    # Get non-zero coefficients
+    selected_features = x_train.columns[model.coef_[0] != 0].tolist()
+    lasso_coefficients = pd.DataFrame({
+        'Feature': x_train.columns,
+        'Coefficient': model.coef_[0]
+    }).sort_values(by='Coefficient', ascending=False)
+    
+    print(f"Selected features: {len(selected_features)}")
+    print(f"Selected feature names: {selected_features}")
+    print("Lasso Coefficients:")
+    print(lasso_coefficients)
+    
+    return selected_features, lasso_coefficients
+
+# Example usage:
+# selected_features, lasso_coefficients = lasso_feature_selection(x_train, y_train, alpha=0.01)
+
+
+
 
 
 
