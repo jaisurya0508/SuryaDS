@@ -45,6 +45,14 @@ selected_features, variance_df = variance_threshold_selection_with_scores(x_trai
 # To see the variance score for each feature, use:
 print(variance_df.head())
 
+import matplotlib.pyplot as plt
+variance_df.sort_values(by='Variance', ascending=False).reset_index(drop=True)['Variance'].plot(kind='bar', figsize=(12, 6))
+plt.axhline(y=threshold, color='r', linestyle='--', label='Threshold')
+plt.title('Feature Variances')
+plt.ylabel('Variance')
+plt.xlabel('Features')
+plt.legend()
+plt.show()
 
 
 
