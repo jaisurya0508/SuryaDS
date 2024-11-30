@@ -114,3 +114,82 @@ x_train_selected = x_train[selected_features]
 
 # Display the selected features
 print(f"\nSelected Features after correlation threshold selection: {x_train_selected.columns}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+..............................................
+
+
+import numpy as np
+import pandas as pd
+
+def correlation_threshold_selection(x_train, threshold=0.9):
+    """
+    Remove features that are highly correlated with others (greater than the threshold).
+    Display the highly correlated feature pairs with their correlation values.
+    
+    Parameters:
+        x_train (pd.DataFrame): Training features.
+        threshold (float): Correlation threshold.
+
+    Returns:
+        selected_features (list): List of features with low correlation to others.
+        high_corr_pairs (list): List of tuples with highly correlated feature pairs and their correlation values.
+    """
+    # Calculate the correlation matrix
+    corr_matrix = x_train.corr()
+    
+    # Extract the upper triangle of the correlation matrix
+    upper_triangle = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+    
+    # Identify highly correlated feature pairs
+    high_corr_pairs = []
+    for column in upper_triangle.columns:
+        correlated_features = upper_triangle[column].abs() > threshold
+        if any(correlated_features):
+            for idx in upper_triangle[column][correlated_features].index:
+                high_corr_pairs.append((column, idx, upper_triangle[column][idx]))
+    
+    # Display highly correlated feature pairs
+    if high_corr_pairs:
+        print("\nHighly Correlated Feature Pairs:")
+        for pair in high_corr_pairs:
+            print(f"Feature 1: {pair[0]} | Feature 2: {pair[1]} | Correlation: {pair[2]:.4f}")
+    else:
+        print("No highly correlated feature pairs found.")
+    
+    # Features to drop
+    to_drop = [column for column in upper_triangle.columns if any(upper_triangle[column].abs() > threshold)]
+    
+    # Select features that are not in the drop list
+    selected_features = [column for column in x_train.columns if column not in to_drop]
+    
+    print(f"\nNumber of features selected: {len(selected_features)}")
+    print(f"Selected features: {selected_features}")
+    
+    return selected_features, high_corr_pairs
+
+# Example usage:
+# Assuming x_train is your dataset with numerical features
+# Replace `x_train` with your actual dataset
+
+selected_features, high_corr_pairs = correlation_threshold_selection(x_train, threshold=0.9)
+
+# Use the selected features to create a new dataframe
+x_train_selected = x_train[selected_features]
+
+# Display selected features
+print(f"\nSelected Features: {x_train_selected.columns.tolist()}")
+
