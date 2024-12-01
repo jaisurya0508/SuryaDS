@@ -94,3 +94,30 @@ print(feature_importance.head(10))
 
 =TRIM(SUBSTITUTE(LEFT(A2, LEN(A2) - (RIGHT(A2) = ",")), "'", ""))
 
+import pandas as pd
+
+# Load the Excel file (Make sure the file is in Excel format)
+file_path = "your_file.xlsx"  # Replace with your file path
+
+# List the sheet names
+sheet_names = pd.ExcelFile(file_path).sheet_names  # Get all sheet names
+
+# Column name to extract from each sheet
+column_name = "Features"  # Replace with your actual column name
+
+# Read the 'Features' column from all sheets
+dfs = [pd.read_excel(file_path, sheet_name=sheet)[column_name] for sheet in sheet_names]
+
+# Find the intersection of values from all sheets
+intersection = set(dfs[0])
+for df in dfs[1:]:
+    intersection = intersection.intersection(set(df))
+
+# Convert the result into a DataFrame (optional)
+intersection_df = pd.DataFrame({'Intersection': list(intersection)})
+
+# Print or save the result
+print(intersection_df)
+
+
+
