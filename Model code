@@ -1,0 +1,189 @@
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score, roc_curve
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. **Logistic Regression Model**
+log_reg = LogisticRegression(random_state=42, max_iter=1000, class_weight='balanced')
+log_reg.fit(X_train, y_train)
+
+# 2. **Predictions**
+X_train['y_actual'] = y_train
+X_train['y_pred'] = log_reg.predict_proba(X_train)[:, 1]
+X_test['y_actual'] = y_test
+X_test['y_pred'] = log_reg.predict_proba(X_test)[:, 1]
+X_oot['y_actual'] = y_oot
+X_oot['y_pred'] = log_reg.predict_proba(X_oot)[:, 1]
+
+# 3. **Feature Importance**
+coefficients = pd.DataFrame({'Feature': X_train.columns, 'Coefficient': log_reg.coef_[0]})
+coefficients['Importance'] = np.abs(coefficients['Coefficient'])
+coefficients = coefficients.sort_values(by='Importance', ascending=False)
+
+# 4. **Plot Feature Importance**
+plt.figure(figsize=(10, 6))
+plt.barh(coefficients['Feature'], coefficients['Importance'], color='lightgreen')
+plt.xlabel('Absolute Coefficient Value')
+plt.ylabel('Feature')
+plt.title('Feature Importance (Logistic Regression)')
+plt.gca().invert_yaxis()
+plt.show()
+
+# 5. **Run Decile Analysis**
+train_summary, train_auc, train_gini, train_ks = decile_analysis(X_train, 'y_pred', 'y_actual')
+test_summary, test_auc, test_gini, test_ks = decile_analysis(X_test, 'y_pred', 'y_actual')
+oot_summary, oot_auc, oot_gini, oot_ks = decile_analysis(X_oot, 'y_pred', 'y_actual')
+
+# 6. **Print Results**
+print(f"Train AUC: {train_auc:.2f}, Gini: {train_gini:.2f}, KS: {train_ks:.2f}")
+print(f"Test AUC: {test_auc:.2f}, Gini: {test_gini:.2f}, KS: {test_ks:.2f}")
+print(f"OOT AUC: {oot_auc:.2f}, Gini: {oot_gini:.2f}, KS: {oot_ks:.2f}")
+
+
+
+from sklearn.ensemble import RandomForestClassifier
+
+# 1. **Random Forest Model**
+rf_model = RandomForestClassifier(
+    n_estimators=100,
+    max_depth=5,
+    random_state=42,
+    class_weight='balanced',
+    oob_score=True
+)
+rf_model.fit(X_train, y_train)
+
+# 2. **Predictions**
+X_train['y_actual'] = y_train
+X_train['y_pred'] = rf_model.predict_proba(X_train)[:, 1]
+X_test['y_actual'] = y_test
+X_test['y_pred'] = rf_model.predict_proba(X_test)[:, 1]
+X_oot['y_actual'] = y_oot
+X_oot['y_pred'] = rf_model.predict_proba(X_oot)[:, 1]
+
+# 3. **Feature Importance**
+importance = pd.DataFrame({
+    'Feature': X_train.columns,
+    'Importance': rf_model.feature_importances_
+})
+importance = importance.sort_values(by='Importance', ascending=False)
+
+# 4. **Plot Feature Importance**
+plt.figure(figsize=(10, 6))
+plt.barh(importance['Feature'], importance['Importance'], color='skyblue')
+plt.xlabel('Importance')
+plt.ylabel('Feature')
+plt.title('Feature Importance (Random Forest)')
+plt.gca().invert_yaxis()
+plt.show()
+
+# 5. **Run Decile Analysis**
+train_summary, train_auc, train_gini, train_ks = decile_analysis(X_train, 'y_pred', 'y_actual')
+test_summary, test_auc, test_gini, test_ks = decile_analysis(X_test, 'y_pred', 'y_actual')
+oot_summary, oot_auc, oot_gini, oot_ks = decile_analysis(X_oot, 'y_pred', 'y_actual')
+
+# 6. **Print Results**
+print(f"Train AUC: {train_auc:.2f}, Gini: {train_gini:.2f}, KS: {train_ks:.2f}")
+print(f"Test AUC: {test_auc:.2f}, Gini: {test_gini:.2f}, KS: {test_ks:.2f}")
+print(f"OOT AUC: {oot_auc:.2f}, Gini: {oot_gini:.2f}, KS: {oot_ks:.2f}")
+
+
+
+
+
+import xgboost as xgb
+import pandas as pd
+from sklearn.metrics import roc_auc_score, roc_curve
+import matplotlib.pyplot as plt
+
+# 1. **Prepare Data for XGBoost**
+dtrain = xgb.DMatrix(X_train, label=y_train)
+dtest = xgb.DMatrix(X_test, label=y_test)
+doot = xgb.DMatrix(X_oot, label=y_oot)
+
+# 2. **Define Model Parameters**
+params = {
+    'objective': 'binary:logistic',
+    'eval_metric': 'auc',
+    'learning_rate': 0.01,
+    'max_depth': 2,
+    'subsample': 0.3,
+    'colsample_bytree': 0.3,
+    'lambda': 5.5,
+    'alpha': 4.8,
+    'gamma': 4.5,
+    'scale_pos_weight': 3.2,
+    'random_state': 42
+}
+
+# 3. **Train the Model**
+evals = [(dtrain, 'train'), (dtest, 'eval')]
+xgb_model = xgb.train(
+    params,
+    dtrain,
+    num_boost_round=2000,
+    early_stopping_rounds=50,
+    evals=evals,
+    verbose_eval=10
+)
+
+# 4. **Predictions**
+X_train['y_actual'] = y_train
+X_train['y_pred'] = xgb_model.predict(dtrain)
+X_test['y_actual'] = y_test
+X_test['y_pred'] = xgb_model.predict(dtest)
+X_oot['y_actual'] = y_oot
+X_oot['y_pred'] = xgb_model.predict(doot)
+
+# 5. **Decile Analysis Function**
+def decile_analysis(df, prediction_col, actual_col, label_good=0, label_bad=1):
+    df['Decile'] = pd.qcut(df[prediction_col], 10, duplicates='drop', labels=False) + 1
+    decile_summary = df.groupby('Decile').agg(
+        mean_actual=(actual_col, 'mean'),
+        mean_prediction=(prediction_col, 'mean'),
+        max_prediction=(prediction_col, 'max'),
+        min_prediction=(prediction_col, 'min'),
+        count=(actual_col, 'count'),
+        label_good=(actual_col, lambda x: (x == label_good).sum()),
+        label_bad=(actual_col, lambda x: (x == label_bad).sum())
+    ).sort_index(ascending=False)
+    
+    # Calculate Metrics
+    auc = roc_auc_score(df[actual_col], df[prediction_col])
+    gini = 2 * auc - 1
+    fpr, tpr, thresholds = roc_curve(df[actual_col], df[prediction_col])
+    ks = (tpr - fpr).max()
+    
+    return decile_summary, auc, gini, ks
+
+# 6. **Run Decile Analysis**
+train_summary, train_auc, train_gini, train_ks = decile_analysis(X_train, 'y_pred', 'y_actual')
+test_summary, test_auc, test_gini, test_ks = decile_analysis(X_test, 'y_pred', 'y_actual')
+oot_summary, oot_auc, oot_gini, oot_ks = decile_analysis(X_oot, 'y_pred', 'y_actual')
+
+# 7. **Print Results**
+print(f"Train AUC: {train_auc:.2f}, Gini: {train_gini:.2f}, KS: {train_ks:.2f}")
+print(f"Test AUC: {test_auc:.2f}, Gini: {test_gini:.2f}, KS: {test_ks:.2f}")
+print(f"OOT AUC: {oot_auc:.2f}, Gini: {oot_gini:.2f}, KS: {oot_ks:.2f}")
+
+# 8. **Feature Importance**
+feature_importance = xgb_model.get_score(importance_type='weight')
+importance_df = pd.DataFrame(list(feature_importance.items()), columns=['Feature', 'Importance'])
+importance_df = importance_df.sort_values(by='Importance', ascending=False)
+
+# 9. **Plot Feature Importance**
+plt.figure(figsize=(10, 6))
+plt.barh(importance_df['Feature'], importance_df['Importance'], color='skyblue')
+plt.xlabel('Importance')
+plt.ylabel('Feature')
+plt.title('Feature Importance')
+plt.gca().invert_yaxis()
+plt.show()
+
+
+
+
+
+
+
