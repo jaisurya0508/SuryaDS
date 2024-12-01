@@ -116,6 +116,42 @@ for df in dfs[1:]:
 # Convert the result into a DataFrame (optional)
 intersection_df = pd.DataFrame({'Intersection': list(intersection)})
 
+
+
+
+
+
+
+
+
+
+import pandas as pd
+
+# Load the Excel file
+file_path = "your_file.xlsx"  # Replace with your file path
+
+# List the sheet names
+sheet_names = pd.ExcelFile(file_path).sheet_names  # Get all sheet names
+
+# Column name to extract from each sheet
+column_name = "Features"  # Replace with the actual column name
+
+# Read the 'Features' column from all sheets into a list of dataframes
+dfs = [pd.read_excel(file_path, sheet_name=sheet)[column_name].dropna() for sheet in sheet_names]
+
+# Combine all the dataframes into one
+all_features = pd.concat(dfs).reset_index(drop=True)
+
+# Randomly sample 30 features from the combined list
+sampled_features = all_features.sample(n=30, random_state=42).reset_index(drop=True)
+
+# Convert to DataFrame (optional)
+sampled_features_df = pd.DataFrame({'Selected_Features': sampled_features})
+
+# Print or save the result
+print(sampled_features_df)
+
+
 # Print or save the result
 print(intersection_df)
 
