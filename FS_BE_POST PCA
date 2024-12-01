@@ -91,3 +91,6 @@ feature_importance = loadings.abs().sum(axis=1).sort_values(ascending=False)
 print("\nTop features contributing across all principal components:")
 print(feature_importance.head(10))
 
+
+=TRIM(SUBSTITUTE(LEFT(A2, LEN(A2) - (RIGHT(A2) = ",")), "'", ""))
+
