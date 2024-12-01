@@ -1,8 +1,8 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, roc_curve
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 
 # 1. **Logistic Regression Model**
 log_reg = LogisticRegression(random_state=42, max_iter=1000, class_weight='balanced')
@@ -27,15 +27,39 @@ plt.barh(coefficients['Feature'], coefficients['Importance'], color='lightgreen'
 plt.xlabel('Absolute Coefficient Value')
 plt.ylabel('Feature')
 plt.title('Feature Importance (Logistic Regression)')
-plt.gca().invert_yaxis()
+plt.gca().invert_yaxis()  # Invert y-axis to display the most important features on top
 plt.show()
 
 # 5. **Run Decile Analysis**
+def decile_analysis(df, prediction_col, actual_col, label_good=0, label_bad=1):
+    # Assign decile groups based on predicted probabilities
+    df['Decile'] = pd.qcut(df[prediction_col], 10, duplicates='drop', labels=False) + 1
+
+    # Calculate statistics for each decile group
+    decile_summary = df.groupby('Decile').agg(
+        mean_actual=(actual_col, 'mean'),
+        mean_prediction=(prediction_col, 'mean'),
+        max_prediction=(prediction_col, 'max'),
+        min_prediction=(prediction_col, 'min'),
+        count=(actual_col, 'count'),
+        label_good=(actual_col, lambda x: (x == label_good).sum()),
+        label_bad=(actual_col, lambda x: (x == label_bad).sum())
+    ).sort_index(ascending=False)
+
+    # AUC and Gini Calculation
+    auc = roc_auc_score(df[actual_col], df[prediction_col])
+    gini = 2 * auc - 1
+    fpr, tpr, thresholds = roc_curve(df[actual_col], df[prediction_col])
+    ks = (tpr - fpr).max()
+
+    return decile_summary, auc, gini, ks
+
+# 6. **Run Decile Analysis for Train, Test, OOT**
 train_summary, train_auc, train_gini, train_ks = decile_analysis(X_train, 'y_pred', 'y_actual')
 test_summary, test_auc, test_gini, test_ks = decile_analysis(X_test, 'y_pred', 'y_actual')
 oot_summary, oot_auc, oot_gini, oot_ks = decile_analysis(X_oot, 'y_pred', 'y_actual')
 
-# 6. **Print Results**
+# 7. **Print Results**
 print(f"Train AUC: {train_auc:.2f}, Gini: {train_gini:.2f}, KS: {train_ks:.2f}")
 print(f"Test AUC: {test_auc:.2f}, Gini: {test_gini:.2f}, KS: {test_ks:.2f}")
 print(f"OOT AUC: {oot_auc:.2f}, Gini: {oot_gini:.2f}, KS: {oot_ks:.2f}")
