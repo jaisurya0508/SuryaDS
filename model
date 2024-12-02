@@ -209,3 +209,22 @@ logit_test_summary, logit_test_auc, logit_test_gini, logit_test_ks = decile_anal
 print(f"Statsmodels Logistic Regression - Train AUC: {logit_train_auc:.2f}, Gini: {logit_train_gini:.2f}, KS: {logit_train_ks:.2f}")
 print(f"Statsmodels Logistic Regression - Test AUC: {logit_test_auc:.2f}, Gini: {logit_test_gini:.2f}, KS: {logit_test_ks:.2f}")
 
+
+
+
+
+
+# Extract p-values from the model
+p_values = logit_results.pvalues
+
+# Combine features with p-values into a DataFrame
+significant_features = pd.DataFrame({
+    'Feature': ['Intercept'] + list(X_train.columns),
+    'P-Value': p_values.values
+})
+
+# Filter for significant features (p-value < 0.05)
+significant_features = significant_features[significant_features['P-Value'] < 0.05]
+
+print("Significant Features Based on P-Values:")
+print(significant_features)
