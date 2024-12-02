@@ -146,3 +146,66 @@ xgboost_test_summary, xgboost_test_auc, xgboost_test_gini, xgboost_test_ks = dec
 # 6. **Print Results for XGBoost**
 print(f"XGBoost - Train AUC: {xgboost_train_auc:.2f}, Gini: {xgboost_train_gini:.2f}, KS: {xgboost_train_ks:.2f}")
 print(f"XGBoost - Test AUC: {xgboost_test_auc:.2f}, Gini: {xgboost_test_gini:.2f}, KS: {xgboost_test_ks:.2f}")
+
+
+
+
+
+
+
+
+
+
+import statsmodels.api as sm
+from sklearn.metrics import roc_auc_score, roc_curve
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# 1. **Add Constant for Statsmodels**
+# Statsmodels requires explicitly adding a constant for the intercept
+X_train_sm = sm.add_constant(X_train)
+X_test_sm = sm.add_constant(X_test)
+
+# 2. **Logistic Regression Model**
+logit_model = sm.Logit(y_train, X_train_sm)
+logit_results = logit_model.fit()
+
+# 3. **Print Model Summary**
+print(logit_results.summary())
+
+# 4. **Predictions (without modifying X_train)**
+X_train_pred = X_train.copy()
+X_test_pred = X_test.copy()
+
+X_train_pred['y_actual'] = y_train
+X_train_pred['y_pred'] = logit_results.predict(X_train_sm)
+
+X_test_pred['y_actual'] = y_test
+X_test_pred['y_pred'] = logit_results.predict(X_test_sm)
+
+# 5. **Feature Importance**
+coefficients = pd.DataFrame({
+    'Feature': ['Intercept'] + list(X_train.columns),
+    'Coefficient': logit_results.params.values
+})
+coefficients['Importance'] = np.abs(coefficients['Coefficient'])
+coefficients = coefficients.sort_values(by='Importance', ascending=False)
+
+# 6. **Plot Feature Importance**
+plt.figure(figsize=(10, 6))
+plt.barh(coefficients['Feature'], coefficients['Importance'], color='lightblue')
+plt.xlabel('Absolute Coefficient Value')
+plt.ylabel('Feature')
+plt.title('Feature Importance (Statsmodels Logistic Regression)')
+plt.gca().invert_yaxis()
+plt.show()
+
+# 7. **Run Decile Analysis for Statsmodels Logistic Regression**
+logit_train_summary, logit_train_auc, logit_train_gini, logit_train_ks = decile_analysis(X_train_pred, 'y_pred', 'y_actual')
+logit_test_summary, logit_test_auc, logit_test_gini, logit_test_ks = decile_analysis(X_test_pred, 'y_pred', 'y_actual')
+
+# 8. **Print Results for Statsmodels Logistic Regression**
+print(f"Statsmodels Logistic Regression - Train AUC: {logit_train_auc:.2f}, Gini: {logit_train_gini:.2f}, KS: {logit_train_ks:.2f}")
+print(f"Statsmodels Logistic Regression - Test AUC: {logit_test_auc:.2f}, Gini: {logit_test_gini:.2f}, KS: {logit_test_ks:.2f}")
+
