@@ -2,25 +2,25 @@ import pandas as pd
 
 # Example DataFrame
 data = {
-    'vm_03': [-1, 0, 0.5, 1.5, 2.5, 3.5, 4.5]  # Example values for vm_03
+    'vm_03': [-1, 0.4, 0.8, 1.7, 2.8, 3.6, 5.0, 6.0]  # Example values for vm_03
 }
 
 df = pd.DataFrame(data)
 
-# Define a function to map values based on conditions
+# Define a function to map values based on the updated conditions
 def map_values(value):
-    if value < 0:
-        return 0.58683
-    elif 0 <= value < 1:
-        return 0.06344
-    elif 1 <= value < 2:
-        return 0.071107
-    elif 2 <= value < 3:
-        return 0.121995
-    elif 3 <= value < 4:
-        return 0.237506
-    else:  # value >= 4
-        return 0.354717
+    if value < 0.50:
+        return 0.406476
+    elif 0.50 <= value <= 1.50:
+        return -0.18059
+    elif 1.50 < value <= 2.50:
+        return -0.26535
+    elif 2.50 < value <= 3.50:
+        return -0.4208
+    elif 3.50 < value <= 5.50:
+        return 0.43781
+    else:  # value > 5.50
+        return -0.77579
 
 # Create the new column based on the function
 df['vm_03_mapped'] = df['vm_03'].apply(map_values)
