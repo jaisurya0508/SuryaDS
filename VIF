@@ -1,0 +1,21 @@
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# Add a constant column for the intercept
+X_train_vif = sm.add_constant(X_train)
+
+# Calculate VIF for each feature
+vif_data = pd.DataFrame({
+    'Feature': X_train_vif.columns,
+    'VIF': [variance_inflation_factor(X_train_vif.values, i) for i in range(X_train_vif.shape[1])]
+})
+
+# Sort by VIF
+vif_data = vif_data.sort_values(by='VIF', ascending=False)
+
+print("Features with their VIF:")
+print(vif_data)
+
+# Optional: Filter for high VIF values
+high_vif = vif_data[vif_data['VIF'] > 10]
+print("Features with high VIF (>10):")
+print(high_vif)
