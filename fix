@@ -1,0 +1,29 @@
+# 3. **Feature Importance**
+# Retrieve feature importance
+feature_importance = xgb_model.get_score(importance_type='weight')  # 'weight' is the default
+
+# Convert to a DataFrame
+importance = pd.DataFrame({
+    'Feature': feature_importance.keys(),
+    'Importance': feature_importance.values()
+})
+
+# Sort by importance
+importance = importance.sort_values(by='Importance', ascending=False)
+
+# Map feature names back to column names in X_train
+# Ensure that X_train.columns are correctly aligned with `f0`, `f1`, etc.
+feature_map = {f"f{i}": col for i, col in enumerate(X_train.columns)}
+importance['Feature'] = importance['Feature'].map(feature_map)
+
+# Drop NaN if any mapping failed
+importance.dropna(inplace=True)
+
+# 4. **Plot Feature Importance**
+plt.figure(figsize=(10, 6))
+plt.barh(importance['Feature'], importance['Importance'], color='lightblue')
+plt.xlabel('Importance')
+plt.ylabel('Feature')
+plt.title('Feature Importance (XGBoost)')
+plt.gca().invert_yaxis()
+plt.show()
