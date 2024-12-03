@@ -1,0 +1,40 @@
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+import joblib  # Library for saving/loading models
+
+# Example dataset
+data = pd.DataFrame({
+    'feature1': [1, 2, 3, 4, 5],
+    'feature2': [5, 4, 3, 2, 1],
+    'target': [0, 1, 0, 1, 0]
+})
+
+# Split into features (X) and target (y)
+X = data[['feature1', 'feature2']]
+y = data['target']
+
+# Train a logistic regression model
+logit_model = LogisticRegression(random_state=42)
+logit_model.fit(X, y)
+
+# Save the model to a file
+joblib.dump(logit_model, 'logit_model.pkl')
+print("Model saved as 'logit_model.pkl'")
+
+# Load the saved model
+logit_model_loaded = joblib.load('logit_model.pkl')
+print("Model loaded successfully.")
+
+# Make predictions on the training data
+y_pred = logit_model_loaded.predict(X)
+y_pred_prob = logit_model_loaded.predict_proba(X)[:, 1]  # Predicted probabilities for class 1
+
+# Print predictions
+print("Predicted values (y_pred):", y_pred)
+print("Predicted probabilities (y_pred_prob):", y_pred_prob)
+
+# Evaluate the model
+auc_score = roc_auc_score(y, y_pred_prob)
+print("ROC-AUC Score on training data:", auc_score)
