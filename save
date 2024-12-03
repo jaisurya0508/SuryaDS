@@ -38,3 +38,34 @@ print("Predicted probabilities (y_pred_prob):", y_pred_prob)
 # Evaluate the model
 auc_score = roc_auc_score(y, y_pred_prob)
 print("ROC-AUC Score on training data:", auc_score)
+
+
+
+import statsmodels.api as sm
+import pickle
+import pandas as pd
+
+# Assuming X_train_sm and y_train are defined as per your code
+# Fit the logistic regression model
+logit_model = sm.Logit(y_train, X_train_sm)
+logit_results = logit_model.fit()
+
+# Print the summary
+print(logit_results.summary())
+
+# Save the model to a file using pickle
+with open("logit_model.pkl", "wb") as file:
+    pickle.dump(logit_results, file)
+print("Model saved as 'logit_model.pkl'")
+
+# Load the model from the file
+with open("logit_model.pkl", "rb") as file:
+    loaded_model = pickle.load(file)
+print("Model loaded successfully.")
+
+# Apply the loaded model to the training data
+X_train_pred = X_train.copy()
+X_train_pred['y_actual'] = y_train
+X_train_pred['y_pred'] = loaded_model.predict(X_train_sm)
+
+print(X_train_pred.head())
