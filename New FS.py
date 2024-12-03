@@ -56,6 +56,19 @@ def forward_selection(x_train, y_train, threshold_in=0.01):
 # Fill null values with -9999
 x_train = x_train.fillna(-9999)
 
+
+import pandas as pd
+
+# Example DataFrame
+data = {'a': [0, 2, 3, 0, 5], 'b': [1, 2, 3, 0, 1]}
+df = pd.DataFrame(data)
+
+# Apply the condition
+df['new_column'] = ((df['a'] > 1) & (df['b'] > 1)).astype(int)
+
+print(df)
+
+
 # Perform forward selection
 selected_features = forward_selection(x_train, y_train, threshold_in=0.01)
 
