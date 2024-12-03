@@ -1,29 +1,76 @@
-# 3. **Feature Importance**
-# Retrieve feature importance
-feature_importance = xgb_model.get_score(importance_type='weight')  # 'weight' is the default
+import pickle
+import statsmodels.api as sm
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score
 
-# Convert to a DataFrame
-importance = pd.DataFrame({
-    'Feature': feature_importance.keys(),
-    'Importance': feature_importance.values()
+# 1. **Load the Saved Model**
+with open('logit_model.pkl', 'rb') as file:
+    loaded_model = pickle.load(file)
+
+# 2. **Add Constant for Statsmodels**
+X_train_sm = sm.add_constant(X_train)
+X_test_sm = sm.add_constant(X_test)
+
+# 3. **Predict Probabilities**
+X_train_pred = X_train.copy()
+X_test_pred = X_test.copy()
+
+X_train_pred['y_actual'] = y_train
+X_train_pred['y_pred'] = loaded_model.predict(X_train_sm)
+
+X_test_pred['y_actual'] = y_test
+X_test_pred['y_pred'] = loaded_model.predict(X_test_sm)
+
+# 4. **Feature Importance**
+coefficients = pd.DataFrame({
+    'Feature': ['Intercept'] + list(X_train.columns),
+    'Coefficient': loaded_model.params.values
 })
+coefficients['Importance'] = np.abs(coefficients['Coefficient'])
+coefficients = coefficients.sort_values(by='Importance', ascending=False)
 
-# Sort by importance
-importance = importance.sort_values(by='Importance', ascending=False)
-
-# Map feature names back to column names in X_train
-# Ensure that X_train.columns are correctly aligned with `f0`, `f1`, etc.
-feature_map = {f"f{i}": col for i, col in enumerate(X_train.columns)}
-importance['Feature'] = importance['Feature'].map(feature_map)
-
-# Drop NaN if any mapping failed
-importance.dropna(inplace=True)
-
-# 4. **Plot Feature Importance**
+# 5. **Plot Feature Importance**
 plt.figure(figsize=(10, 6))
-plt.barh(importance['Feature'], importance['Importance'], color='lightblue')
-plt.xlabel('Importance')
+plt.barh(coefficients['Feature'], coefficients['Importance'], color='lightblue')
+plt.xlabel('Absolute Coefficient Value')
 plt.ylabel('Feature')
-plt.title('Feature Importance (XGBoost)')
+plt.title('Feature Importance (Statsmodels Logistic Regression)')
 plt.gca().invert_yaxis()
 plt.show()
+
+# 6. **Run Decile Analysis for Statsmodels Logistic Regression**
+logit_train_summary, logit_train_auc, logit_train_gini, logit_train_ks = decile_analysis(X_train_pred, 'y_pred', 'y_actual')
+logit_test_summary, logit_test_auc, logit_test_gini, logit_test_ks = decile_analysis(X_test_pred, 'y_pred', 'y_actual')
+
+# 7. **Print Results for Statsmodels Logistic Regression**
+print("Statsmodels Logistic Regression - Train Results")
+print(f"AUC: {logit_train_auc:.2f}, Gini: {logit_train_gini:.2f}, KS: {logit_train_ks:.2f}")
+print()
+print("Statsmodels Logistic Regression - Test Results")
+print(f"AUC: {logit_test_auc:.2f}, Gini: {logit_test_gini:.2f}, KS: {logit_test_ks:.2f}")
+
+# 8. **Plot Decile Analysis (Optional)**
+def plot_decile_analysis(summary, title):
+    plt.figure(figsize=(10, 6))
+    plt.plot(summary['Decile'], summary['Cumulative_Good_Percentage'], label='Cumulative Good %', marker='o')
+    plt.plot(summary['Decile'], summary['Cumulative_Bad_Percentage'], label='Cumulative Bad %', marker='o')
+    plt.fill_between(
+        summary['Decile'], 
+        summary['Cumulative_Good_Percentage'], 
+        summary['Cumulative_Bad_Percentage'], 
+        color='grey', alpha=0.2, label='KS Gap'
+    )
+    plt.title(title)
+    plt.xlabel('Decile')
+    plt.ylabel('Cumulative Percentage')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+# Plot Train Decile Analysis
+plot_decile_analysis(logit_train_summary, "Train Decile Analysis")
+
+# Plot Test Decile Analysis
+plot_decile_analysis(logit_test_summary, "Test Decile Analysis")
