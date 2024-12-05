@@ -1,0 +1,18 @@
+# Include Application ID for reference
+X_train_pred = X_train.copy()
+X_test_pred = X_test.copy()
+
+# Adding Application ID column (assuming it's available in original dataset)
+X_train_pred['Application_ID'] = train_data['Application_ID'].values
+X_test_pred['Application_ID'] = test_data['Application_ID'].values
+
+# Predictions and actual values
+X_train_pred['y_actual'] = y_train
+X_train_pred['y_pred'] = logit_results.predict(X_train_sm)
+
+X_test_pred['y_actual'] = y_test
+X_test_pred['y_pred'] = logit_results.predict(X_test_sm)
+
+# Model summary
+print("Model Summary")
+print(logit_results.summary())
