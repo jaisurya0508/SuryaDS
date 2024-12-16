@@ -96,3 +96,62 @@ test_summary, test_auc, test_gini, test_ks = decile_analysis(X_test_pred, 'y_pre
 print(f"XGBoost - Train AUC: {train_auc:.2f}, Gini: {train_gini:.2f}, KS: {train_ks:.2f}")
 print(f"XGBoost - Eval AUC: {eval_auc:.2f}, Gini: {eval_gini:.2f}, KS: {eval_ks:.2f}")
 print(f"XGBoost - Test AUC: {test_auc:.2f}, Gini: {test_gini:.2f}, KS: {test_ks:.2f}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ from sklearn.metrics import roc_auc_score
+from sklearn.inspection import permutation_importance
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+ 
+# Define a custom scoring function
+def custom_scoring(model, X, y):
+    dmatrix = xgb.DMatrix(X)  # Convert to DMatrix
+    y_pred = model.predict(dmatrix)  # Predict using the Booster
+    return roc_auc_score(y, y_pred)  # Compute ROC AUC score
+ 
+# Permutation Importance
+perm_importance = permutation_importance(
+    estimator=xgb_model,  # XGBoost Booster model
+    X=X_test,             # Test features
+    y=y_test,             # Test target
+    scoring=custom_scoring,  # Custom scoring function
+    n_repeats=10,         # Number of permutations
+    random_state=42
+)
+ 
+# Convert importance to DataFrame
+importance = pd.DataFrame({
+    'Feature': X_test.columns,
+    'Importance': perm_importance.importances_mean,
+    'Std': perm_importance.importances_std
+}).sort_values(by='Importance', ascending=False)
+ 
+# Plot Permutation Importance
+plt.figure(figsize=(10, 6))
+plt.barh(importance['Feature'], importance['Importance'], xerr=importance['Std'], color='lightblue')
+plt.xlabel('Permutation Importance')
+plt.ylabel('Feature')
+plt.title('Permutation Importance (XGBoost)')
+plt.gca().invert_yaxis()
+plt.show()
+
+has context menu
