@@ -14,3 +14,12 @@ importance_df = importance_df.sort_values(by='Importance', ascending=False).rese
 
 # Display the DataFrame
 print(importance_df)
+# Parameters
+
+$BucketName = "your-bucket-name"              # Replace with your S3 bucket name
+$FileKey = "your/folder/path/filename.txt"    # Replace with the file's key (path in the bucket)
+
+# Remove the file from S3
+Remove-S3Object -BucketName $BucketName -Key $FileKey -Force
+
+Write-Output "File $FileKey has been removed from bucket $BucketName."
