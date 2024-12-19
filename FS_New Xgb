@@ -1,0 +1,16 @@
+import xgboost as xgb
+import pandas as pd
+
+# Assuming `model` is your trained XGBoost model
+
+# Extract feature importance (using 'gain' as an example; change as needed)
+importance_dict = model.get_booster().get_score(importance_type='gain')
+
+# Convert to DataFrame
+importance_df = pd.DataFrame(list(importance_dict.items()), columns=['Feature', 'Importance'])
+
+# Sort by importance
+importance_df = importance_df.sort_values(by='Importance', ascending=False).reset_index(drop=True)
+
+# Display the DataFrame
+print(importance_df)
