@@ -20,3 +20,10 @@ result = (
 )
 
 print(result)
+
+
+unique_negatives = negative_baldif['BALDIF01'].unique()
+mapping = {value: idx + 1 for idx, value in enumerate(sorted(unique_negatives))}
+
+# Step 3: Map the values and create a new column
+df['BALDIF01_mapped'] = df['BALDIF01'].map(mapping)
