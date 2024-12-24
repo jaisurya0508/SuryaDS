@@ -27,3 +27,6 @@ mapping = {value: idx + 1 for idx, value in enumerate(sorted(unique_negatives))}
 
 # Step 3: Map the values and create a new column
 df['BALDIF01_mapped'] = df['BALDIF01'].map(mapping)
+
+
+positive_or_null_baldif = df[(df['BALDIF01'] >= 0) | (df['BALDIF01'].isnull())]
