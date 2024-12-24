@@ -1,0 +1,23 @@
+import pandas as pd
+import numpy as np
+
+# Example DataFrame
+data = pd.DataFrame({
+    'Feature': ['A', 'B', 'C'],
+    'Label_0_Count': [50, 30, 20],  # Good counts (label 0)
+    'Label_1_Count': [10, 20, 70],  # Bad counts (label 1)
+})
+
+# Step 1: Calculate total good (label 0) and bad (label 1) counts
+total_good = data['Label_0_Count'].sum()
+total_bad = data['Label_1_Count'].sum()
+
+# Step 2: Calculate percentage of good and bad for each category
+data['pct_good'] = data['Label_0_Count'] / total_good
+data['pct_bad'] = data['Label_1_Count'] / total_bad
+
+# Step 3: Calculate WOE (add a small value to avoid division by zero)
+data['WOE'] = np.log((data['pct_good'] + 1e-10) / (data['pct_bad'] + 1e-10))
+
+# Display the result
+print(data)
