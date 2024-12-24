@@ -1,0 +1,22 @@
+import pandas as pd
+
+# Example DataFrame
+data = {
+    'BALDIF01': [-100, -50, -100, -50, -200, -200, -100, 50, 100],
+    'bad06m': [1, 0, 1, 1, 0, 1, 0, 0, 1]  # 1 = bad, 0 = good
+}
+df = pd.DataFrame(data)
+
+# Step 1: Filter negative BALDIF01 values
+negative_baldif = df[df['BALDIF01'] < 0]
+
+# Step 2: Group by BALDIF01 and calculate good/bad counts
+result = (
+    negative_baldif.groupby('BALDIF01')['bad06m']
+    .value_counts()
+    .unstack(fill_value=0)  # Reshape for better readability
+    .rename(columns={0: 'Good_Count', 1: 'Bad_Count'})  # Rename columns
+    .reset_index()
+)
+
+print(result)
