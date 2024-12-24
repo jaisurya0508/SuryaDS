@@ -30,3 +30,48 @@ df['BALDIF01_mapped'] = df['BALDIF01'].map(mapping)
 
 
 positive_or_null_baldif = df[(df['BALDIF01'] >= 0) | (df['BALDIF01'].isnull())]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import pandas as pd
+
+# Example DataFrames
+main_df = pd.DataFrame({
+    'app_id': [1, 2, 3, 4, 5],
+    'other_col': ['A', 'B', 'C', 'D', 'E']
+})
+
+df1 = pd.DataFrame({
+    'app_id': [1, 2, 3],
+    'cola_woe': [0.1, 0.2, 0.3]
+})
+
+df2 = pd.DataFrame({
+    'app_id': [4, 5],
+    'cola_woe': [0.4, 0.5]
+})
+
+# Merge df1 into main_df
+main_df = main_df.merge(df1, on='app_id', how='left', suffixes=('', '_df1'))
+
+# Merge df2 into main_df
+main_df = main_df.merge(df2, on='app_id', how='left', suffixes=('', '_df2'))
+
+# Fill NaN for unmatched values and rename columns as needed
+main_df['cola_woe_final'] = main_df['cola_woe'].combine_first(main_df['cola_woe_df2'])
+
+print(main_df)
+
