@@ -1,0 +1,12 @@
+#Create WOE variable for Credit Card Balance Change v 3 Months Previously
+conditions = [
+    ((bureau_hit_data['BALDIF01'].isnull==True)),
+    (bureau_hit_data['BALDIF01']==-9999999),
+    ((bureau_hit_data['BALDIF01']>-9999999) & (bureau_hit_data['BALDIF01']<=-967.5)),
+    ((bureau_hit_data['cb_tot_current_balance_max']>=10000) & (bureau_hit_data['cb_avg_utilization_max']<70)),
+    ((bureau_hit_data['cb_tot_current_balance_max']>=10000) & (bureau_hit_data['cb_avg_utilization_max']<80)),
+    ((bureau_hit_data['cb_tot_current_balance_max']>=10000) & (bureau_hit_data['cb_avg_utilization_max']>=80))
+]
+values = [0.476292165,-1.019084488,0.057,-0.09,-0.42,-0.76]
+bureau_hit_data['utilization_all_trades_woe']=np.select(conditions,values)
+bureau_hit_data.groupby('utilization_all_trades_woe').count()
