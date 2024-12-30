@@ -1,0 +1,35 @@
+import pandas as pd
+
+# Example DataFrame
+data = {
+    'TRANBAL1': [10, -1, 5, -6],
+    'TRANBAL2': [20, 15, -6, 25],
+    'TRANBAL3': [30, 25, 35, 20],
+    # Add more columns up to TRANBAL24 as needed
+}
+
+# Creating a sample DataFrame
+df = pd.DataFrame(data)
+
+# Generating column names dynamically for TRANBAL1 to TRANBAL24
+tranbal_columns = [f'TRANBAL{i}' for i in range(1, 25)]
+
+# Ensure all required columns exist in the DataFrame
+for col in tranbal_columns:
+    if col not in df.columns:
+        df[col] = None  # Fill missing columns with None
+
+# Define the logic for TRANBAL1_24
+def calculate_tranbal(row):
+    values = row[tranbal_columns]
+    if (values == -1).any():
+        return -1
+    elif (values == -6).any():
+        return -6
+    else:
+        return values.mean()
+
+# Apply the logic to create the new column
+df['TRANBAL1_24'] = df.apply(calculate_tranbal, axis=1)
+
+print(df)
