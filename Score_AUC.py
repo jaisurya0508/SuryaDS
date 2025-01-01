@@ -45,11 +45,5 @@ if __name__ == "__main__":
 
 
 
-AT01A
-E1_B_09
-E1_A_11	
-AT36S
-RT33S	
-VM03_SP_VM2_09	
-VM08_SP_VM2_23	
-AT34PSA
+Write-S3Object -BucketName $BucketName -Key $Key -File $FilePath
+Get-S3Object -BucketName $BucketName | Where-Object { $_.Key -eq $Key }
