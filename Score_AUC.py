@@ -42,3 +42,14 @@ if __name__ == "__main__":
  
     gini_coefficient = calculate_gini(data, score_column, target_column)
     print(f"Gini Coefficient: {gini_coefficient}")
+
+
+
+AT01A
+E1_B_09
+E1_A_11	
+AT36S
+RT33S	
+VM03_SP_VM2_09	
+VM08_SP_VM2_23	
+AT34PSA
