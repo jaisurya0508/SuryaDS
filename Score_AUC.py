@@ -101,7 +101,30 @@ if __name__ == "__main__":
     })
 
     score_column = 'score'
+
+ 
     target_column = 'target'
+
+
+
+
+
+
+
+
+
+ $BucketName = "your-bucket-name"
+$FolderName = "result/subfolder/"
+
+# Get all objects in the folder
+$Objects = Get-S3Object -BucketName $BucketName -KeyPrefix $FolderName
+
+# Delete each object
+$Objects | ForEach-Object {
+    Remove-S3Object -BucketName $BucketName -Key $_.Key
+    Write-Host "Deleted: $($_.Key)"
+}
+
 
     # Generate decile chart
     decile_chart = create_decile_chart(data, score_column, target_column)
