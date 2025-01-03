@@ -24,5 +24,18 @@ print(data)
 
 
 
+
+Experian: s3://bmf-analytics-dev-eu-west-2-leobrix/DataDictionaries/ExperianDD.xlsm
+TU: s3://bmf-analytics-dev-eu-west-2-leobrix/DataDictionaries/TransUnionRetroDD.pdf
+
+
+
+
+ s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/Experian/RawData/ExperianTradelineData_1k.csv
+s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/TransUnion/RawData/TUTradelineData_1k.csv
+
+
+
+
 •	Experian: s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/Experian/RawData/ExperianTradelineData.csv
 •	TransUnion: s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/TransUnion/RawData/TUTradelineData.csv
