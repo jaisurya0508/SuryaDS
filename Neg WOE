@@ -21,3 +21,8 @@ data['WOE'] = np.log((data['pct_good'] + 1e-10) / (data['pct_bad'] + 1e-10))
 
 # Display the result
 print(data)
+
+
+
+•	Experian: s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/Experian/RawData/ExperianTradelineData.csv
+•	TransUnion: s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/TransUnion/RawData/TUTradelineData.csv
