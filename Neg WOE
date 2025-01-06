@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+filtered_df = df[(df["count_exp"] > 0) & (df["count_tu"] > 0)]
 # Example DataFrame
 data = pd.DataFrame({
     'Feature': ['A', 'B', 'C'],
