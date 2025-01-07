@@ -8,6 +8,14 @@ data = pd.DataFrame({
     'Label_1_Count': [10, 20, 70],  # Bad counts (label 1)
 })
 
+grouped = (
+    df[df['Match_flag'] == 1]  # Filter for Match_flag == 1
+    .groupby(["App_id", "Acc_type"])  # Group by App_id and Acc_type
+    .size()  # Count occurrences
+    .reset_index(name="Count")  # Reset index and name the count column
+)
+
+
 # Step 1: Calculate total good (label 0) and bad (label 1) counts
 total_good = data['Label_0_Count'].sum()
 total_bad = data['Label_1_Count'].sum()
