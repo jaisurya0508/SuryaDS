@@ -1,16 +1,14 @@
 import pandas as pd
 import numpy as np
+# Step 1: Filter where MATCH_FLAG == 1
+filtered_df = df[df['MATCH_FLAG'] == 1]
 
-# Filter where Match_flag == 1 and Acc_type is in ['BA', 'BN']
-filtered_df = df[(df['Match_flag'] == 1) & (df['Acc_type'].isin(['BA', 'BN']))]
-
-# Group by App_id and count occurrences
+# Step 2: Filter further where ACC_TYPE is in ['BA', 'ba'] and count unique IDs
 result = (
-    filtered_df.groupby('App_id')
-    .size()
-    .reset_index(name='Count_BA_BN')
+    filtered_df[filtered_df['ACC_TYPE'].isin(['BA', 'ba'])]  # Filter for ACC_TYPE
+    .groupby('ACC_TYPE')['UNIQUEID'].nunique()  # Count unique UNIQUEID values
+    .reset_index(name='Unique_ID_Count')  # Reset index for a clean output
 )
-
 
 
 
