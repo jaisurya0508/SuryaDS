@@ -1,12 +1,18 @@
 import pandas as pd
 import numpy as np
-filtered_df = df[(df["count_exp"] > 0) & (df["count_tu"] > 0)]
-# Example DataFrame
-data = pd.DataFrame({
-    'Feature': ['A', 'B', 'C'],
-    'Label_0_Count': [50, 30, 20],  # Good counts (label 0)
-    'Label_1_Count': [10, 20, 70],  # Bad counts (label 1)
-})
+
+# Filter where Match_flag == 1 and Acc_type is in ['BA', 'BN']
+filtered_df = df[(df['Match_flag'] == 1) & (df['Acc_type'].isin(['BA', 'BN']))]
+
+# Group by App_id and count occurrences
+result = (
+    filtered_df.groupby('App_id')
+    .size()
+    .reset_index(name='Count_BA_BN')
+)
+
+
+
 
 grouped = (
     df[df['Match_flag'] == 1]  # Filter for Match_flag == 1
