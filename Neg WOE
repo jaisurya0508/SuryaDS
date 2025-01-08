@@ -20,11 +20,24 @@ Utilities = [21, 39, 40, 41, 42, 43]
 
 
 
+
+
 grouped = (
     df[df['Match_flag'] == 1]  # Filter for Match_flag == 1
     .groupby(["App_id", "Acc_type"])  # Group by App_id and Acc_type
     .size()  # Count occurrences
-    .reset_index(name="Count")  # Reset index and name the count column
+    .reset_index(name="Count")
+AccountType	TU
+Bank	['BK', 'CA', 'DC', 'DF', 'OD', 'RQ']
+HomeShopping	['BC', 'HA', 'HD', 'HS', 'HX', 'MA', 'MO', 'TV', 'WI']
+Insurance	['BI', 'CI', 'GI', 'HI', 'IN', 'MI', 'MP', 'PI', 'PP', 'PT']
+LoanCredit	['BA', 'BH', 'BL', 'BN', 'BR', 'CP', 'CR', 'CS', 'CX', 'CY', 'DA', 'DH', 'ED', 'EL', 'FD', 'FL', 'FS', 'HP', 'IL', 'LN', 'LP', 'LS', 'ML', 'OL', 'OR', 'PL', 'PR', 'RG', 'RT', 'SB', 'SC', 'SE', 'SL', 'SO', 'TL', 'UL', 'ZH', 'ZL']
+Miscellaneous	['AD', 'AF', 'BX', 'CD', 'CT', 'CZ', 'DP', 'EC', 'FT', 'GA', 'GL', 'IC', 'IS', 'LR', 'MC', 'OA', 'RC', 'SA', 'SS', 'TR', 'VS', 'ZC']
+Mortgage	['BM', 'CM', 'DM', 'FM', 'FO', 'IM', 'MG', 'MM', 'MT', 'NM', 'OM', 'RM', 'SM', 'SX', 'XM', 'ZM']
+RevolvingCredit	['BD', 'CC', 'CH', 'CO', 'FC', 'RS', 'ST']
+Telecomms	['AM', 'AU', 'BO', 'BU', 'CB', 'LT', 'MU', 'QA', 'SI', 'TM']
+Utilities	['DU', 'EE', 'EW', 'GE', 'OI', 'QE', 'QG', 'QU', 'QW', 'UE', 'UT']
+ # Reset index and name the count column
 )
 
 
