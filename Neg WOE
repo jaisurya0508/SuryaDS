@@ -40,6 +40,11 @@ Utilities	['DU', 'EE', 'EW', 'GE', 'OI', 'QE', 'QG', 'QU', 'QW', 'UE', 'UT']
  # Reset index and name the count column
 )
 
+ 
+Equifax: s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/Equifax/Equifax_DeclineAnalysis.csv
+Experian: s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/Experian/RawData/Experian_RejectAnalysis.csv
+TU: s3://bmf-analytics-dev-eu-west-2-leobrix/data/Retros/September2024Retros/Experian/RawData/Experian_RejectAnalysis.csv
+
 
 # Step 1: Calculate total good (label 0) and bad (label 1) counts
 total_good = data['Label_0_Count'].sum()
