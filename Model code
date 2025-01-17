@@ -186,3 +186,127 @@ plt.show()
 
 
 
+
+ 
+model_data['Weight_vintage'] = model_data['month_year'].apply(map_weight)
+ 
+# Drop Null values of Target 
+df = model_data.dropna(subset=['90_in_24mob'])
+# take one copy for model development data
+data = df.copy()
+#some bank data have inf very rate but by safe replace 
+data.replace([np.inf, -np.inf], np.nan, inplace=True)
+ 
+model_df1 = data[(data['month_year']>='2021-01') & (data['month_year']<='2022-06')]
+oot_df1= data[(data['month_year']>='2022-07') & (data['month_year']<='2022-09')]
+# Selected Features for model build purpose
+model_df = model_df1[features_list]
+# Separate features (X) and target (y) for Model and OOT datasets
+X_model = model_df.drop(columns=['month_year', '90_in_24mob']) # Adjust 'target' to your actual target column name
+y_model = model_df['90_in_24mob']
+X_oot = oot_df.drop(columns=['month_year', '90_in_24mob'])
+y_oot = oot_df['90_in_24mob']
+ 
+#Handling Null Values
+for i in X_model.columns:
+    X_model[i].fillna(-9999,inplace=True)
+ 
+for i in X_oot.columns:
+    X_oot[i].fillna(-9999,inplace=True)
+ 
+### Split Model dataset into Train and Test
+ 
+X_train, X_test, y_train, y_test = train_test_split(X_model, y_model, test_size=0.40,random_state=42)
+ 
+#Split Training data into 80% train and 20% eval
+X_train_new, X_eval, y_train_new, y_eval = train_test_split(
+    X_train, y_train, test_size=0.2, random_state =42
+)
+print(X_train_new.shape, X_eval.shape, X_test.shape)
+ 
+#Get vintage weight values
+train_weights = X_train_new['Weight_vintage'].values
+eval_weights = X_eval['Weight_vintage'].values
+test_weights = X_test['Weight_vintage'].values
+oot_weights = X_oot['Weight_vintage'].values
+ 
+X_train_new = X_train_new.drop(columns=['Weight_vintage'])
+X_eval = X_eval.drop(columns=['Weight_vintage'])
+X_test = X_test.drop(columns=['Weight_vintage'])
+X_oot = X_oot.drop(columns=['Weight_vintage'])
+ 
+# 2. **Prepare DMatrix for XGBoost**
+dtrain = xgb.DMatrix(X_train_new, label=y_train_new, weight=train_weights)
+deval = xgb.DMatrix(X_eval, label=y_eval,weight=eval_weights)
+dtest = xgb.DMatrix(X_test, label=y_test)
+doot = xgb.DMatrix(X_oot, label=y_oot)
+ 
+params = {
+    'objective': 'binary:logistic',
+    'eval_metric': 'auc',
+    'learning_rate': 0.01,
+    'max_depth': 2,
+    'subsample': 0.3,
+    'colsample_bytree': 0.3,
+    'lambda': 12.6,
+    'alpha': 4.8,
+    'gamma': 5.6,
+    'scale_pos_weight': 3.8,
+    'random_state': 24   
+}
+ 
+ 
+evals = [(dtrain, 'train'), (dtest, 'eval')]
+xgb_model = xgb.train(
+    params,
+    dtrain,
+    num_boost_round= 500,
+    early_stopping_rounds= 40,
+    evals=evals,
+    verbose_eval=10
+)
+ 
+X_train_pred = X_train_new.copy()
+X_eval_pred = X_eval.copy()
+X_test_pred = X_test.copy()
+X_oot_pred = X_oot.copy()
+ 
+ 
+X_train_pred['y_actual'] = y_train_new
+X_train_pred['y_pred'] = xgb_model.predict(dtrain)
+X_train_pred['LID'] = model_df1.loc[X_train_new.index,'latest_feature_id'].values
+ 
+X_eval_pred['y_actual'] = y_eval
+X_eval_pred['y_pred'] = xgb_model.predict(deval)
+X_eval_pred['LID'] = model_df1.loc[X_eval.index,'latest_feature_id'].values
+ 
+X_test_pred['y_actual'] = y_test
+X_test_pred['y_pred'] = xgb_model.predict(dtest)
+X_test_pred['LID'] = model_df1.loc[X_test.index,'latest_feature_id'].values
+ 
+X_oot_pred['y_actual'] = y_oot
+X_oot_pred['y_pred'] = xgb_model.predict(doot)
+X_oot_pred['LID'] = oot_df1.loc[X_oot.index,'latest_feature_id'].values
+ 
+# 6. **Run Decile Analysis**
+train_summary, train_auc, train_gini, train_ks = decile_analysis(X_train_pred, 'y_pred', 'y_actual')
+eval_summary, eval_auc, eval_gini, eval_ks = decile_analysis(X_eval_pred, 'y_pred', 'y_actual')
+ 
+test_summary, test_auc, test_gini, test_ks = decile_analysis(X_test_pred, 'y_pred', 'y_actual')
+oot_summary, oot_auc, oot_gini, oot_ks = decile_analysis(X_oot_pred, 'y_pred', 'y_actual')
+ 
+# 7. **Print Results**
+print(f"Train AUC: {train_auc:.2f}, Gini: {train_gini:.2f}, KS: {train_ks:.2f}")
+print(f"Eval AUC: {eval_auc:.2f}, Gini: {eval_gini:.2f}, KS: {eval_ks:.2f}")
+print(f"Test AUC: {test_auc:.2f}, Gini: {test_gini:.2f}, KS: {test_ks:.2f}")
+print(f"OOT AUC: {oot_auc:.2f}, Gini: {oot_gini:.2f}, KS: {oot_ks:.2f}")
+ 
+#Save the model
+xgb_model.save_model('.json')
+print('Model Saved')
+has context menu
+
+
+
+
+
