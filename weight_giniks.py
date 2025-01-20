@@ -49,4 +49,30 @@ gini = weighted_gini(y_true, y_pred, sample_weight)
 ks = weighted_ks(y_true, y_pred, sample_weight)
  
 print(f"Weighted Gini: {gini}")
+
+
+
+def weighted_gini(y_true, y_pred, sample_weight):
+    """
+    Calculate the weighted Gini coefficient and normalize it.
+    """
+    # Create a DataFrame to organize the data
+    data = pd.DataFrame({'y_true': y_true, 'y_pred': y_pred, 'sample_weight': sample_weight})
+    # Sort data by predicted values and then by actual values
+    data.sort_values(by=['y_pred', 'y_true'], ascending=[False, False], inplace=True)
+    # Cumulative sum of weights and true values
+    data['cum_weight'] = data['sample_weight'].cumsum()
+    total_weight = data['sample_weight'].sum()
+    total_true = (data['y_true'] * data['sample_weight']).sum()
+    # Calculate Lorenz curve values
+    data['lorentz_true'] = (data['y_true'] * data['sample_weight']).cumsum() / total_true
+    data['lorentz_weight'] = data['cum_weight'] / total_weight
+    # Calculate Gini coefficient
+    gini = np.sum((data['lorentz_true'] - data['lorentz_weight']) * data['sample_weight'])
+    
+    # Normalize Gini coefficient
+    perfect_gini = weighted_gini(y_true, y_true, sample_weight)
+    normalized_gini = gini / perfect_gini
+    return normalized_gini
+
 print(f"Weighted KS: {ks}")
