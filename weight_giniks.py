@@ -76,3 +76,39 @@ def weighted_gini(y_true, y_pred, sample_weight):
     return normalized_gini
 
 print(f"Weighted KS: {ks}")
+
+
+def weighted_gini(y_true, y_pred, sample_weight):
+    """
+    Calculate the weighted Gini coefficient and normalize it.
+    """
+    # Create a DataFrame to organize the data
+    data = pd.DataFrame({'y_true': y_true, 'y_pred': y_pred, 'sample_weight': sample_weight})
+    
+    # Sort data by predicted values and then by actual values
+    data.sort_values(by=['y_pred', 'y_true'], ascending=[False, False], inplace=True)
+    
+    # Cumulative sum of weights and true values
+    data['cum_weight'] = data['sample_weight'].cumsum()
+    total_weight = data['sample_weight'].sum()
+    total_true = (data['y_true'] * data['sample_weight']).sum()
+    
+    # Calculate Lorenz curve values
+    data['lorentz_true'] = (data['y_true'] * data['sample_weight']).cumsum() / total_true
+    data['lorentz_weight'] = data['cum_weight'] / total_weight
+    
+    # Calculate Gini coefficient
+    gini = np.sum((data['lorentz_true'] - data['lorentz_weight']) * data['sample_weight'])
+    
+    # Calculate the perfect Gini (ideal scenario)
+    # This means sorting `y_true` by itself with the same weights
+    data_perfect = data.sort_values(by='y_true', ascending=False)
+    data_perfect['cum_weight'] = data_perfect['sample_weight'].cumsum()
+    data_perfect['lorentz_true'] = (data_perfect['y_true'] * data_perfect['sample_weight']).cumsum() / total_true
+    data_perfect['lorentz_weight'] = data_perfect['cum_weight'] / total_weight
+    perfect_gini = np.sum((data_perfect['lorentz_true'] - data_perfect['lorentz_weight']) * data_perfect['sample_weight'])
+    
+    # Normalize Gini coefficient
+    normalized_gini = gini / perfect_gini
+    return normalized_gini
+
