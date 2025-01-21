@@ -97,3 +97,10 @@ vif_data = pd.DataFrame({
 })
 
 print(vif_data)
+
+
+unweighted_counts = y_train.value_counts()
+weighted_counts = y_train.groupby(y_train).apply(lambda x: Train.loc[x.index, 'weights'].sum())
+print("Unweighted Class Counts:\n", unweighted_counts)
+print("Weighted Class Counts:\n", weighted_counts)
+
