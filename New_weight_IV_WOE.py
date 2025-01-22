@@ -96,3 +96,16 @@ if __name__ == "__main__":
     # Access detailed WOE and IV for a specific predictor
     print("\nDetailed WOE and IV for 'x1':")
     print(detailed_results['x1'])
+
+
+
+# Save IV summary to CSV
+iv_summary_df.to_csv('iv_summary.csv', index=False)
+print("IV summary saved to 'iv_summary.csv'.")
+
+# Save detailed WOE and IV results to separate CSV files for each predictor
+for predictor, result_df in detailed_results.items():
+    filename = f'woe_iv_{predictor}.csv'
+    result_df.to_csv(filename, index=False)
+    print(f"Detailed WOE and IV for '{predictor}' saved to '{filename}'.")
+
