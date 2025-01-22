@@ -103,6 +103,21 @@ if __name__ == "__main__":
 iv_summary_df.to_csv('iv_summary.csv', index=False)
 print("IV summary saved to 'iv_summary.csv'.")
 
+
+
+
+# Combine all detailed WOE and IV results into a single DataFrame
+combined_woe_iv_results = pd.DataFrame()
+
+for predictor, result_df in detailed_results.items():
+    result_df['predictor'] = predictor  # Add a column for predictor name
+    combined_woe_iv_results = pd.concat([combined_woe_iv_results, result_df], ignore_index=True)
+
+# Save combined results to a single CSV file
+combined_woe_iv_results.to_csv('woe_iv_combined.csv', index=False)
+print("Combined WOE and IV results saved to 'woe_iv_combined.csv'.")
+
+
 # Save detailed WOE and IV results to separate CSV files for each predictor
 for predictor, result_df in detailed_results.items():
     filename = f'woe_iv_{predictor}.csv'
