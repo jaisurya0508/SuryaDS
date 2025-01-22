@@ -1,35 +1,36 @@
 import pandas as pd
 import numpy as np
 
-def sum_weights_by_special_values(data, feature_special_values, target_col, weight_col):
+def sum_weights_by_special_values(data, target_col, weight_col):
     """
-    Calculate the sum of weights for special values in each feature column,
+    Calculate the sum of weights for values <= 0 in each feature column,
     separated by target values (0 and 1).
     
     Args:
     - data (pd.DataFrame): Input DataFrame containing feature columns, target column, and weight column.
-    - feature_special_values (dict): Dictionary where the key is the feature name and the value is the list of special values.
     - target_col (str): Name of the binary target column (0/1).
     - weight_col (str): Name of the weight column.
     
     Returns:
-    - result_df (pd.DataFrame): DataFrame with the sum of weights for target == 0 and target == 1 for each special value.
+    - result_df (pd.DataFrame): DataFrame with the sum of weights for target == 0 and target == 1 for each feature where values <= 0.
     """
     result = []
     
-    for feature, special_values in feature_special_values.items():
-        # Filter rows where the feature contains special values
-        special_data = data[data[feature].isin(special_values)]
-        
-        # Group by the feature values (special values)
-        grouped = special_data.groupby(feature).apply(lambda x: pd.Series({
-            'sum_weight_0': x.loc[x[target_col] == 0, weight_col].sum(),
-            'sum_weight_1': x.loc[x[target_col] == 1, weight_col].sum()
-        })).reset_index()
-        
-        # Add feature column to the result for identification
-        grouped['feature'] = feature
-        result.append(grouped)
+    # Loop over each feature column in the data
+    for feature in data.columns:
+        if feature not in [target_col, weight_col]:  # Skip target and weight columns
+            # Filter rows where the feature contains values <= 0
+            special_data = data[data[feature] <= 0]
+            
+            # Group by the feature values (<= 0)
+            grouped = special_data.groupby(feature).apply(lambda x: pd.Series({
+                'sum_weight_0': x.loc[x[target_col] == 0, weight_col].sum(),
+                'sum_weight_1': x.loc[x[target_col] == 1, weight_col].sum()
+            })).reset_index()
+            
+            # Add feature column to the result for identification
+            grouped['feature'] = feature
+            result.append(grouped)
     
     # Combine all results into a single DataFrame
     result_df = pd.concat(result, ignore_index=True)
@@ -48,18 +49,11 @@ if __name__ == "__main__":
         'weight': np.random.rand(1000) * 10
     })
 
-    # Define the feature columns and special values for each feature
-    feature_special_values = {
-        'feature_1': [-1, -4, -999],
-        'feature_2': [-999, -4],
-        'feature_3': [-999]
-    }
-
     target_col = 'target'
     weight_col = 'weight'
 
-    # Calculate the sum of weights for special values in each feature
-    result_df = sum_weights_by_special_values(data, feature_special_values, target_col, weight_col)
+    # Calculate the sum of weights for values <= 0 in each feature
+    result_df = sum_weights_by_special_values(data, target_col, weight_col)
     
     # Display the result
     print(result_df)
