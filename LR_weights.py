@@ -2,7 +2,7 @@ import pandas as pd
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import matplotlib.pyplot as plt
-
+df2['new_col'] = df2['application_id'].isin(df1['application_id']).apply(lambda x: 'Train' if x else 'Test')
 print("********* Data Loaded **********")
 
 reselected_features = [
