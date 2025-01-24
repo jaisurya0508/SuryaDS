@@ -7,7 +7,17 @@ Considered the records hard Good/Bad flag is missing. And parcelled them as G wi
 Multiplied the parcel weight with the original weight to get new weight.
 
 
+# Count the number of missing values
+missing_count = data['dataset_type'].isnull().sum()
 
+# Generate random choices of 'TRAIN' and 'TEST' to fill the missing values
+# Maintain the original ratio of TRAIN and TEST (40854:17000)
+train_ratio = 40854 / (40854 + 17000)
+test_ratio = 1 - train_ratio
+fill_values = np.random.choice(['TRAIN', 'TEST'], size=missing_count, p=[train_ratio, test_ratio])
+
+# Fill the missing values in the dataset
+data.loc[data['dataset_type'].isnull(), 'dataset_type'] = fill_values
 
 
 import pandas as pd
