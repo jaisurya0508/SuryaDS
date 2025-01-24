@@ -1,3 +1,15 @@
+We have started with the BMF Retro data set using it as the driver file (left for joins).
+Joined client file to get all Experian features (using BMF Retro as the left).
+Joined non credit variables file to get all Experian features (using BMF Retro as the left).
+Joined the Experian modeling data to obtain the Good/Bad flag for all approved and Rejects & NTUs where we have a hard performance from the bureau.
+Used the weighted XGB model to obtain probability of bad for all records.
+Considered the records hard Good/Bad flag is missing. And parcelled them as G with weight 1-p and bad with weight p. (call this parcel weight)
+Multiplied the parcel weight with the original weight to get new weight.
+
+
+
+
+
 import pandas as pd
 
 # Main DataFrame
