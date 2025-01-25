@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-data_cleaned = data.loc[:, ~data.columns.str.endswith('_bin')]
+
 # Function to calculate WOE and IV for a single predictor
 def calculate_weighted_woe_iv(data, predictor, target, weight_col, bins=10):
     # Create a unique bin column name
@@ -47,10 +47,20 @@ def calculate_weighted_woe_iv(data, predictor, target, weight_col, bins=10):
         return None, None
 
 # Function to calculate WOE and IV for all predictors
-def calculate_woe_iv_all(data, predictors, target, weight_col, bins=10, batch_size=100):
+def calculate_woe_iv_all(data, predictors, target, weight_col, bins=10, batch_size=100, output_file="woe_iv_results.csv"):
     iv_summary = []
     detailed_results = {}
     skipped_features = []
+    errors = []
+
+    # Write header for CSV if file doesn't exist
+    header = ['predictor', 'bin', 'total_weight', 'good_weight', 'bad_weight', 'good_dist', 'bad_dist', 'woe', 'iv']
+    try:
+        with open(output_file, 'a') as f:
+            pass  # Just check if file exists and is accessible
+    except FileNotFoundError:
+        # File doesn't exist, so we create it and write the header
+        pd.DataFrame(columns=header).to_csv(output_file, mode='w', index=False)
 
     # Process in batches to avoid memory issues
     for i in range(0, len(predictors), batch_size):
@@ -64,15 +74,28 @@ def calculate_woe_iv_all(data, predictors, target, weight_col, bins=10, batch_si
                 if result_df is not None:
                     iv_summary.append({'predictor': predictor, 'iv': total_iv})
                     detailed_results[predictor] = result_df
+                    
+                    # Save the results to CSV for each feature
+                    result_df['predictor'] = predictor
+                    result_df.to_csv(output_file, mode='a', header=False, index=False)
+
                 else:
                     skipped_features.append(predictor)
             except Exception as e:
                 print(f"Skipping {predictor} due to error: {e}")
                 skipped_features.append(predictor)
+                errors.append({'feature': predictor, 'error': str(e)})
 
     # Create a summary DataFrame sorted by IV
     iv_summary_df = pd.DataFrame(iv_summary).sort_values(by='iv', ascending=False)
-    return iv_summary_df, detailed_results, skipped_features
+
+    # Check if there were any errors
+    if errors:
+        print("\nErrors in Processing Features:")
+        for error in errors:
+            print(f"Feature: {error['feature']}, Error: {error['error']}")
+
+    return iv_summary_df, detailed_results, skipped_features, errors
 
 # Example Input Data
 # Replace this with your actual dataset
@@ -90,7 +113,7 @@ weight_col = 'new_weight'
 predictors = data.drop(columns=[target, weight_col]).columns
 
 # Calculate WOE and IV for all predictors in batches of 100
-iv_summary_df, detailed_results, skipped_features = calculate_woe_iv_all(data, predictors, target, weight_col, bins=10, batch_size=100)
+iv_summary_df, detailed_results, skipped_features, errors = calculate_woe_iv_all(data, predictors, target, weight_col, bins=10, batch_size=100, output_file="woe_iv_results.csv")
 
 # Display IV Summary
 print("\nIV Summary for All Predictors:")
@@ -101,10 +124,8 @@ if skipped_features:
     print("\nSkipped Features Due to Errors:")
     print(skipped_features)
 
-# Access detailed WOE and IV for a specific predictor
-specific_predictor = 'x1'
-if specific_predictor in detailed_results:
-    print(f"\nDetailed WOE and IV for '{specific_predictor}':")
-    print(detailed_results[specific_predictor])
-else:
-    print(f"\n'{specific_predictor}' was skipped due to an error.")
+# Display errors
+if errors:
+    print("\nDetailed Error Information:")
+    for error in errors:
+        print(f"Feature: {error['feature']} caused the following error: {error['error']}")
