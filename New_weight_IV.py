@@ -5,14 +5,14 @@ import numpy as np
 def calculate_weighted_woe_iv(data, predictor, target, weight_col, bins=10):
     # Create a unique bin column name
     bin_column_name = f'{predictor}_bin'
-    
+
     # Drop bin column if it already exists
     if bin_column_name in data.columns:
         data.drop(columns=[bin_column_name], inplace=True)
-    
+
     # Generate bins and assign them to the new bin column
     data[bin_column_name] = pd.qcut(data[predictor], bins, duplicates='drop')
-    
+
     # Group by the bins
     grouped = data.groupby(bin_column_name).apply(
         lambda grp: pd.Series({
@@ -47,16 +47,21 @@ def calculate_weighted_woe_iv(data, predictor, target, weight_col, bins=10):
 def calculate_woe_iv_all(data, predictors, target, weight_col, bins=10):
     iv_summary = []
     detailed_results = {}
+    skipped_features = []
 
     for predictor in predictors:
-        print(f"Processing: {predictor}")
-        result_df, total_iv = calculate_weighted_woe_iv(data, predictor, target, weight_col, bins)
-        iv_summary.append({'predictor': predictor, 'iv': total_iv})
-        detailed_results[predictor] = result_df
+        try:
+            print(f"Processing: {predictor}")
+            result_df, total_iv = calculate_weighted_woe_iv(data, predictor, target, weight_col, bins)
+            iv_summary.append({'predictor': predictor, 'iv': total_iv})
+            detailed_results[predictor] = result_df
+        except Exception as e:
+            print(f"Skipping {predictor} due to error: {e}")
+            skipped_features.append(predictor)
 
     # Create a summary DataFrame sorted by IV
     iv_summary_df = pd.DataFrame(iv_summary).sort_values(by='iv', ascending=False)
-    return iv_summary_df, detailed_results
+    return iv_summary_df, detailed_results, skipped_features
 
 
 # Example Input Data
@@ -64,6 +69,7 @@ def calculate_woe_iv_all(data, predictors, target, weight_col, bins=10):
 data = pd.DataFrame({
     'x1': np.random.rand(1000) * 100,  # Random predictor
     'x2': np.random.rand(1000) * 50,   # Another random predictor
+    'E1_A_04': np.random.rand(1000) * 75,  # Example feature causing an issue
     'new_bad03_24m': np.random.choice([0, 1], size=1000, p=[0.7, 0.3]),  # Target variable
     'new_weight': np.random.rand(1000) * 10  # Random weights
 })
@@ -74,13 +80,21 @@ weight_col = 'new_weight'
 predictors = data.drop(columns=[target, weight_col]).columns
 
 # Calculate WOE and IV for all predictors
-iv_summary_df, detailed_results = calculate_woe_iv_all(data, predictors, target, weight_col, bins=10)
+iv_summary_df, detailed_results, skipped_features = calculate_woe_iv_all(data, predictors, target, weight_col, bins=10)
 
 # Display IV Summary
 print("\nIV Summary for All Predictors:")
 print(iv_summary_df)
 
+# Display Skipped Features
+if skipped_features:
+    print("\nSkipped Features Due to Errors:")
+    print(skipped_features)
+
 # Access detailed WOE and IV for a specific predictor
 specific_predictor = 'x1'
-print(f"\nDetailed WOE and IV for '{specific_predictor}':")
-print(detailed_results.get(specific_predictor))
+if specific_predictor in detailed_results:
+    print(f"\nDetailed WOE and IV for '{specific_predictor}':")
+    print(detailed_results[specific_predictor])
+else:
+    print(f"\n'{specific_predictor}' was skipped due to an error.")
