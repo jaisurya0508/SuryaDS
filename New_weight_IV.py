@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+data_cleaned = data.loc[:, ~data.columns.str.endswith('_bin')]
 # Function to calculate WOE and IV for a single predictor
 def calculate_weighted_woe_iv(data, predictor, target, weight_col, bins=10):
     # Create a unique bin column name
