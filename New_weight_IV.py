@@ -37,6 +37,9 @@ def calculate_weighted_woe_iv(data, predictor, target, weight_col, bins=10):
     # Sum IV for all bins
     total_iv = grouped['iv'].sum()
 
+    # Rename bin column for consistency in output
+    grouped.rename(columns={bin_column_name: 'bin'}, inplace=True)
+
     return grouped[['bin', 'total_weight', 'good_weight', 'bad_weight', 'good_dist', 'bad_dist', 'woe', 'iv']], total_iv
 
 
