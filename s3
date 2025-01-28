@@ -1,0 +1,17 @@
+# Define variables
+$BucketName = "bmf-analytics-dev-eu-west-2-leobrix"
+$Region = "eu-west-2"
+$LocalFolderPath = "D:\test\Pred_data\data"
+$FolderPrefix = "leobrix_model_iteration_data_final_pred/data/"
+
+# Upload each file in the local folder to S3
+Get-ChildItem -Path $LocalFolderPath -Recurse -File | ForEach-Object {
+    $RelativePath = $_.FullName.Substring($LocalFolderPath.Length).TrimStart('\').Replace('\', '/')
+    $S3FileKey = $FolderPrefix + $RelativePath
+
+    # Upload file to S3
+    Write-S3Object -BucketName $BucketName -Region $Region -File $_.FullName -Key $S3FileKey
+
+    # Output confirmation
+    Write-Output "Uploaded: $($_.FullName) to S3 Key: $S3FileKey"
+}
