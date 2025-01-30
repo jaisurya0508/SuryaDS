@@ -15,3 +15,22 @@ Get-ChildItem -Path $LocalFolderPath -Recurse -File | ForEach-Object {
     # Output confirmation
     Write-Output "Uploaded: $($_.FullName) to S3 Key: $S3FileKey"
 }
+
+
+
+# Define S3 bucket and key
+$bucketName = "your-s3-bucket-name"
+$parentKey = "leobrix_model_iteration_Feb25"
+
+# Define the new folder path
+$experianKey = "$parentKey/Experian/"
+
+# Create the Experian folder (S3 does not support empty folders, so we create a placeholder)
+aws s3 cp "s3://$bucketName/$parentKey/M1/" "s3://$bucketName/$experianKey/M1/" --recursive
+aws s3 cp "s3://$bucketName/$parentKey/M2/" "s3://$bucketName/$experianKey/M2/" --recursive
+aws s3 cp "s3://$bucketName/$parentKey/M3/" "s3://$bucketName/$experianKey/M3/" --recursive
+
+# Remove original folders
+aws s3 rm "s3://$bucketName/$parentKey/M1/" --recursive
+aws s3 rm "s3://$bucketName/$parentKey/M2/" --recursive
+aws s3 rm "s3://$bucketName/$parentKey/M3/" --recursive
